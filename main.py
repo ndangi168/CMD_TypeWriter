@@ -7,6 +7,7 @@ from datetime import datetime
 
 class Typewriter:
     def __init__(self):
+        self.selected_level = None
         pass
 
     def clear_screen(self):
@@ -23,12 +24,47 @@ class Typewriter:
 
     def display_banner(self):
         banner = r"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                          🎯 TERMINAL TYPEWRITER 🎯                           ║
-║                        Calculate Your Typing Speed                           ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+    ╔══════════════════════════════════════════════════════════════════════════════╗
+    ║                          🎯 TERMINAL TYPEWRITER 🎯                           ║
+    ║                        Calculate Your Typing Speed                           ║
+    ╚══════════════════════════════════════════════════════════════════════════════╝
         """
-        print(banner)
+        self.type_text(banner, delay=0.002)
+        #print(banner)
+
+    def get_difficulty_level(self):
+        """Get difficulty level selection from user"""
+        print("\n Select Difficulty Level:")
+        print("1. Beginner   - Simple words and common phrases")
+        print("2. Intermediate - Mixed sentences with punctuation")
+        print("3. Advanced   - Complex text with numbers and symbols")
+        print("4. Expert     - Programming code snippets")
+
+        while True:
+            try:
+                choice = input("Enter your choice (1-4): ")
+                if choice.strip() == "":
+                    print("Input cannot be empty. Please try again.")
+                    continue
+                if choice in ['1', '2', '3', '4']:
+                    levels = {
+                        '1': 'beginner',
+                        '2': 'intermediate', 
+                        '3': 'advanced',
+                        '4': 'expert'
+                    }
+                    self.selected_level = levels[choice]
+                    print(f"You selected {self.selected_level.capitalize()} level.")
+                    return True
+                else:
+                    print("Invalid choice. Please select a number between 1 and 4.")
+            except KeyboardInterrupt:
+                print("\nProgram terminated by user.")
+                sys.exit(0)
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                print("Please try again.")
+
 
     def run(self):
         self.clear_screen()
