@@ -8,6 +8,7 @@ from datetime import datetime
 class Typewriter:
     def __init__(self):
         self.selected_level = None
+        self.selected_time = None
         pass
 
     def clear_screen(self):
@@ -64,7 +65,46 @@ class Typewriter:
             except Exception as e:
                 print(f"An error occurred: {e}")
                 print("Please try again.")
+                sys.exit(0)
 
+    def get_time(self):
+        """Get time duration for typing test from user"""
+        print("\n Set Time Duration for Typing Test:")
+        print("1. 30 seconds")
+        print("2. 1 minute")
+        print("3. 2 minutes")
+        print("4. Custom (enter seconds)")
+        while True:
+            try:
+                choice = input("Enter your choice (1-4): ")
+                if choice.strip() == "":
+                    print("Input cannot be empty. Please try again.")
+                    continue
+                if choice in ['1', '2', '3', '4']:
+                    if choice == '1':
+                        self.selected_time = 30
+                    elif choice == '2':
+                        self.selected_time = 60
+                    elif choice == '3':
+                        self.selected_time = 120
+                    elif choice == '4':
+                        while True:
+                            custom_time = input("Enter custom time in seconds (e.g., 45): ")
+                            if custom_time.isdigit() and int(custom_time) > 0:
+                                self.selected_time = int(custom_time)
+                            else:
+                                print("Please enter a valid positive integer for seconds.")
+                else:
+                    print("Invalid choice. Please select a number between 1 and 4.")
+                    continue
+                return True
+            except KeyboardInterrupt:
+                print("\nProgram terminated by user.")
+                sys.exit(0)
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                print("Please try again.")
+                sys.exit(0)
 
     def run(self):
         self.clear_screen()
