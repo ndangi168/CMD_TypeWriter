@@ -154,6 +154,21 @@ class Typewriter:
         # Trim to target length
         self.current_text = ' '.join(current_words[:target_word_count])
 
+    def display_text_and_start(self):
+        """Display the text to type"""
+        print("Selected Level:", self.selected_level.capitalize())
+        print("Time Duration:", self.selected_time, "seconds")
+        print("\n" + "="*70)
+        print("\nType the following text:\n")
+        print("\n" + "="*70 + "\n")
+        print(self.current_text)
+        print("\n" + "="*70)
+        print("Press Enter when you're ready to start...")
+        self.start_typing_test()
+
+    def start_typing_test(self):
+        pass
+
     def run(self):
         self.clear_screen()
         self.display_banner()
