@@ -175,7 +175,7 @@ class Typewriter:
     def start_typing_test(self):
         self.clear_screen()
         time_remaining = self.selected_time
-        print(f"Level: {self.selected_level.capitalize()} | Time: {self.selected_time} seconds | Time remaining: {time_remaining} seconds")
+        print(f"Level: {self.selected_level.capitalize()} | Time: {self.selected_time} seconds")
         print("=" * 70)
         print(self.current_text)
         print("=" * 70)
@@ -184,15 +184,19 @@ class Typewriter:
         self.start_time = time.time()
         self.test_active = True
 
-        # Thread Deamon to handle countdown
+        # Threading allows timer and input to run concurrently
+        # Daemon ensures threads exit when main program exits
+        timer_thread = threading.Thread(target=self.time_remaining)
+        timer_thread.daemon = True
+        timer_thread.start()
+
         input_thread = threading.Thread(target=self.time_countdown)
         input_thread.daemon = True
         input_thread.start()
 
         try:
-            self.user_input = input("")
+            self.user_input = input()
         except KeyboardInterrupt:
-            print("\nTest interrupted by user.")
             pass
         finally:
             self.test_active = False
@@ -222,18 +226,58 @@ class Typewriter:
 
         self.calculate_results()
 
+    def time_remaining(self):
+        """Display remaining time every second"""
+        import shutil
+        rows, columns = shutil.get_terminal_size()
+        while self.test_active:
+            elapsed = int(time.time() - self.start_time)
+            remaining = self.selected_time - elapsed
+            if remaining < 0:
+                remaining = 0
+            # Move cursor to bottom line, clear the line, print timer, restore cursor
+            sys.stdout.write(f"\0337\033[{rows};1H\033[K⏳ Time remaining: {remaining} seconds\0338")
+            sys.stdout.flush()
+            time.sleep(1)
+        # Clear timer line after test ends
+        sys.stdout.write(f"\0337\033[{rows};1H\033[K\0338")
+        sys.stdout.flush()
+        
+
     def calculate_results(self):
         pass
 
+    def display_results(self, stats):
+        pass
+
     def run(self):
-        self.clear_screen()
-        self.display_banner()
-        name = input("Enter your name: ")
-        print(f"\nHello, {name}! Text your typing speed in terminal\n")
-        self.get_difficulty_level()
-        self.get_time()
-        self.get_text()
-        self.display_text_and_start()
+        try:
+            while True:
+                self.clear_screen()
+                self.display_banner()
+
+                name = input("Enter your name: ")
+                print(f"\nHello, {name}! Text your typing speed in terminal\n")
+
+                if not self.get_difficulty_level():
+                    continue
+                if not self.get_time():
+                    continue
+
+                self.get_text()
+                self.display_text_and_start()
+
+                stats = self.calculate_results()
+                self.display_results(stats)
+
+                print("\nWould you like to try again? (y/n)", end=" ")
+                if input().lower().strip() not in ['y', 'yes']:
+                    break
+
+        except KeyboardInterrupt:
+            pass
+        finally:
+            print("\n\nThank you for using Terminal Typewriter. Goodbye!")
 
 
 def main():
