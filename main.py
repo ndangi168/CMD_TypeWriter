@@ -186,9 +186,9 @@ class Typewriter:
 
         # Threading allows timer and input to run concurrently
         # Daemon ensures threads exit when main program exits
-        timer_thread = threading.Thread(target=self.time_remaining)
-        timer_thread.daemon = True
-        timer_thread.start()
+        # timer_thread = threading.Thread(target=self.time_remaining)
+        # timer_thread.daemon = True
+        # timer_thread.start()
 
         input_thread = threading.Thread(target=self.time_countdown)
         input_thread.daemon = True
@@ -227,21 +227,22 @@ class Typewriter:
         self.calculate_results()
 
     def time_remaining(self):
-        """Display remaining time every second"""
-        import shutil
-        rows, columns = shutil.get_terminal_size()
-        while self.test_active:
-            elapsed = int(time.time() - self.start_time)
-            remaining = self.selected_time - elapsed
-            if remaining < 0:
-                remaining = 0
-            # Move cursor to bottom line, clear the line, print timer, restore cursor
-            sys.stdout.write(f"\0337\033[{rows};1H\033[K⏳ Time remaining: {remaining} seconds\0338")
-            sys.stdout.flush()
-            time.sleep(1)
-        # Clear timer line after test ends
-        sys.stdout.write(f"\0337\033[{rows};1H\033[K\0338")
-        sys.stdout.flush()
+    #     """Display remaining time every second"""
+    #     import shutil
+    #     rows, columns = shutil.get_terminal_size()
+    #     while self.test_active:
+    #         elapsed = int(time.time() - self.start_time)
+    #         remaining = self.selected_time - elapsed
+    #         if remaining < 0:
+    #             remaining = 0
+    #         # Move cursor to bottom line, clear the line, print timer, restore cursor
+    #         sys.stdout.write(f"\0337\033[{rows};1H\033[K⏳ Time remaining: {remaining} seconds\0338")
+    #         sys.stdout.flush()
+    #         time.sleep(1)
+    #     # Clear timer line after test ends
+    #     sys.stdout.write(f"\0337\033[{rows};1H\033[K\0338")
+    #     sys.stdout.flush()
+        pass
         
     def calculate_results(self):
         """Calculate and return typing statistics"""
@@ -292,7 +293,22 @@ class Typewriter:
         }
 
     def display_results(self, stats):
-        pass
+        """Display the final results"""
+        self.clear_screen()
+        self.display_banner()
+        
+        print("\n🎉 TYPING TEST COMPLETED! 🎉")
+        print("="*50)
+        
+        print(f"\n📊 Statistics:")
+        print(f"⚡ Words Per Minute: {stats['wpm']}")
+        print(f"🎯 Accuracy: {stats['accuracy']}%") 
+        print(f"⏱️  Time: {stats['time_taken']} seconds")
+        print(f"✅ Correct chars: {stats['correct_chars']}")
+        print(f"❌ Errors: {stats['errors']}")
+        print(f"📝 Total chars: {stats['typed_chars']}/{stats['original_length']}")
+        
+        print("\n" + "="*50)
 
     def run(self):
         try:
