@@ -243,9 +243,53 @@ class Typewriter:
         sys.stdout.write(f"\0337\033[{rows};1H\033[K\0338")
         sys.stdout.flush()
         
-
     def calculate_results(self):
-        pass
+        """Calculate and return typing statistics"""
+        actual_time = self.end_time - self.start_time
+
+        # Calculate character-by-character comparison
+        typed_chars = len(self.user_input)
+        original_chars = len(self.current_text)
+        
+        # Calculate correct characters and errors
+        correct_chars = 0
+        min_length = min(typed_chars, original_chars)
+        for i in range(min_length):
+            if self.user_input[i] == self.current_text[i]:
+                correct_chars += 1
+        
+        # Count actual words
+        original_words = len(self.current_text.split())
+        typed_words = len(self.user_input.split())
+        
+        # Calculate correct words
+        original_word_list = self.current_text.split()
+        typed_word_list = self.user_input.split()
+        correct_words = 0
+        for i in range(min(len(original_word_list), len(typed_word_list))):
+            if typed_word_list[i] == original_word_list[i]:
+                correct_words += 1
+        
+        # Calculate WPM using actual words typed
+        wpm = (correct_words / actual_time) * 60 if actual_time > 0 else 0
+        
+        # Calculate accuracy percentage
+        accuracy = (correct_chars / original_chars * 100) if original_chars > 0 else 0
+        
+        # Calculate total errors (character level)
+        errors = typed_chars - correct_chars
+
+        return {
+            'wpm': round(wpm, 2),
+            'accuracy': round(accuracy, 2),
+            'typed_chars': typed_chars,
+            'correct_chars': correct_chars,
+            'errors': errors,
+            'time_taken': round(actual_time, 2),
+            'original_length': original_chars,
+            'correct_words': correct_words,
+            'total_words': original_words
+        }
 
     def display_results(self, stats):
         pass
