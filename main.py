@@ -199,6 +199,30 @@ class Typewriter:
             self.end_time = time.time()
 
     def time_countdown(self):
+        """Countdown timer for the typing test"""
+        start_timer = time.time()
+        while self.test_active and (time.time() - start_timer) < self.selected_time:
+            time.sleep(1)
+        
+        if self.test_active:
+            self.test_active = False
+            print("\n\n⏰ TIME'S UP!")
+            # To interrupt input() in main thread
+            try:
+                if os.name == 'posix':
+                    import sys
+                    import termios
+                    termios.tcflush(sys.stdin, termios.TCIFLUSH)
+                else:
+                    import msvcrt  # For Windows
+                    if msvcrt.kbhit():
+                        msvcrt.getch()
+            except:
+                pass
+
+        self.calculate_results()
+
+    def calculate_results(self):
         pass
 
     def run(self):
