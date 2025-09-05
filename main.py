@@ -10,6 +10,10 @@ class Typewriter:
         self.selected_level = None
         self.selected_time = None
         self.current_text = ""
+        self.start_time = None
+        self.end_time = None
+        self.test_active = False
+        self.user_input = ""
         pass
 
     def clear_screen(self):
@@ -31,8 +35,8 @@ class Typewriter:
     ║                        Calculate Your Typing Speed                           ║
     ╚══════════════════════════════════════════════════════════════════════════════╝
         """
-        self.type_text(banner, delay=0.002)
-        #print(banner)
+        #self.type_text(banner, delay=0.002)
+        self.type_text(banner,delay=0)
 
     def get_difficulty_level(self):
         """Get difficulty level selection from user"""
@@ -56,7 +60,7 @@ class Typewriter:
                         '4': 'expert'
                     }
                     self.selected_level = levels[choice]
-                    print(f"You selected {self.selected_level.capitalize()} level.")
+                    print(f"✅ You selected {self.selected_level.capitalize()} level.")
                     return True
                 else:
                     print("Invalid choice. Please select a number between 1 and 4.")
@@ -123,15 +127,15 @@ class Typewriter:
             'intermediate': [
                 "On Tuesday, Sarah visited the local market & bought: fresh vegetables, fruits, and bread! The total cost was $45.75, which seemed reasonable.",
                 "Have you ever wondered why typing skills are so important? In today's digital age, fast & accurate typing can save hours of time!",
-                "The weather forecast predicts 75"%" chance of rain & thunderstorms tomorrow; don't forget your umbrella! Temperature will range from 18°C to 25°C.",
-                "Mr. Smith's presentation impressed everyone - his charts showed 45"%" growth in Q2! The team celebrated with pizza & refreshments later.",
+                "The weather forecast predicts 75% chance of rain & thunderstorms tomorrow; don't forget your umbrella! Temperature will range from 18°C to 25°C.",
+                "Mr. Smith's presentation impressed everyone - his charts showed 45% growth in Q2! The team celebrated with pizza & refreshments later.",
                 "The museum's new exhibit features artwork from the 1800s & early 1900s; tickets cost $22.50 for adults, $15.75 for students."
             ],
             'advanced': [
-                "In Q1 2024, company XYZ reported 187.5"%" growth, processing @250,000 transactions/day! The CEO announced $2.5M investment in AI & ML tools.",
-                "According to recent studies, ~75"%" of professionals type >65 WPM; however, only 15"%" achieve >100 WPM. Want to join the top 5%?",
+                "In Q1 2024, company XYZ reported 187.5% growth, processing @250,000 transactions/day! The CEO announced $2.5M investment in AI & ML tools.",
+                "According to recent studies, ~75% of professionals type >65 WPM; however, only 15% achieve >100 WPM. Want to join the top 5%?",
                 "Project #A-123 requires completion by 15/03/2024; estimated budget: $750K (+/- 10%). Contact support@company.com for queries.",
-                "In 2023, global tech spending reached $4.5T (€4.1T); AI investments grew by 235%! Average ROI: 180"%" across 500+ companies.",
+                "In 2023, global tech spending reached $4.5T (€4.1T); AI investments grew by 235%! Average ROI: 180% across 500+ companies.",
                 "Database query optimized from O(n²) to O(log n), improving performance by 400%! Server load decreased from 85% to 23.5%."
             ],
             'expert': [
@@ -156,53 +160,57 @@ class Typewriter:
 
     def display_text_and_start(self):
         """Display the text to type"""
-        print("Selected Level:", self.selected_level.capitalize())
+        self.clear_screen()
+        self.display_banner()
+        print("\nSelected Level:", self.selected_level.capitalize())
         print("Time Duration:", self.selected_time, "seconds")
         print("\n" + "="*70)
-        print("\nType the following text:\n")
+        print("\nType the following text:")
         print("\n" + "="*70 + "\n")
         print(self.current_text)
         print("\n" + "="*70)
-        print("Press Enter when you're ready to start...")
+        input("Press Enter when you're ready to start...")
         self.start_typing_test()
 
     def start_typing_test(self):
+        self.clear_screen()
+        time_remaining = self.selected_time
+        print(f"Level: {self.selected_level.capitalize()} | Time: {self.selected_time} seconds | Time remaining: {time_remaining} seconds")
+        print("=" * 70)
+        print(self.current_text)
+        print("=" * 70)
+        print("Start typing below. Press Ctrl+C to finish early.\n")
+
+        self.start_time = time.time()
+        self.test_active = True
+
+        # Thread Deamon to handle countdown
+        input_thread = threading.Thread(target=self.time_countdown)
+        input_thread.daemon = True
+        input_thread.start()
+
+        try:
+            self.user_input = input("")
+        except KeyboardInterrupt:
+            print("\nTest interrupted by user.")
+            pass
+        finally:
+            self.test_active = False
+            self.end_time = time.time()
+
+    def time_countdown(self):
         pass
 
     def run(self):
         self.clear_screen()
         self.display_banner()
         name = input("Enter your name: ")
-        sample_texts = [
-            "The quick brown fox jumps over the lazy dog.",
-            "Typing is a skill that improves with practice.",
-            "Consistency is key to mastering any skill.",
-            "Practice makes perfect, so keep typing!"
-        ]
-        text_to_type = random.choice(sample_texts)
-        print(f"Hello, {name}! Type the following text as fast as you can:\n")
-        print(text_to_type)
-        input("\nPress Enter when you're ready to start...")
-        print("Start typing now:\n")
-        
-        start_time = datetime.now()
-        user_input = input()
-        end_time = datetime.now()
+        print(f"\nHello, {name}! Text your typing speed in terminal\n")
+        self.get_difficulty_level()
+        self.get_time()
+        self.get_text()
+        self.display_text_and_start()
 
-        time_taken = (end_time - start_time).total_seconds()
-        words_typed = len(user_input.split())
-        wpm = (words_typed / time_taken) * 60 if time_taken > 0 else 0
-
-        self.clear_screen()
-        self.display_banner()
-        print(f"Time taken: {time_taken:.2f} seconds")
-        print(f"Words typed: {words_typed}")
-        print(f"Your typing speed: {wpm:.2f} WPM")
-        
-        if user_input.strip() == text_to_type.strip():
-            print("Great job! You typed the text correctly.")
-        else:
-            print("There were some mistakes in your typing. Keep practicing!")
 
 def main():
     app = Typewriter()
