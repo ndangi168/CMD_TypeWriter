@@ -2,7 +2,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from typing import Any, Dict
+from typing import Any, Dict, Optional, List
 
 from ..utils.exceptions import StorageException
 
@@ -15,7 +15,7 @@ def ensure_directory(path: str) -> None:
 
 
 class StorageManager:
-    def __init__(self, db_path: str | None = None) -> None:
+    def __init__(self, db_path: Optional[str] = None) -> None:
         self.db_path = db_path or os.path.join(os.getcwd(), DB_RELATIVE_PATH)
         ensure_directory(self.db_path)
         self._init_db()
@@ -70,3 +70,37 @@ class StorageManager:
                 ),
             )
             conn.commit()
+
+    def fetch_recent_sessions(self, limit: int = 10) -> List[Dict[str, Any]]:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, timestamp, mode, duration, text_length, wpm, accuracy, errors
+                FROM sessions
+                ORDER BY timestamp DESC
+                LIMIT ?
+                """,
+                (limit,),
+            )
+            rows = cur.fetchall()
+            return [
+                {
+                    "id": r[0],
+                    "timestamp": r[1],
+                    "mode": r[2],
+                    "duration": r[3],
+                    "text_length": r[4],
+                    "wpm": r[5],
+                    "accuracy": r[6],
+                    "errors": r[7],
+                }
+                for r in rows
+            ]
+
+    def count_sessions(self) -> int:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(1) FROM sessions")
+            (count,) = cur.fetchone()
+            return int(count)

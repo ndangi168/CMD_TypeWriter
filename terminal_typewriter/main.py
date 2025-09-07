@@ -4,8 +4,10 @@ from typing import Optional
 from src.core.text_manager import TextManager
 from src.core.engine import TypingEngine
 from src.ui.display import DisplayManager
+from src.ui.menu import MenuSystem
 from src.data.storage import StorageManager
 from src.utils.helpers import generate_session_id, now_utc_iso
+from src.features.reports import format_history_table
 
 
 def prompt_level() -> str:
@@ -50,10 +52,59 @@ def prompt_duration() -> int:
         print("Invalid choice. Please select a number between 1 and 4.")
 
 
+def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: StorageManager) -> None:
+    level = prompt_level()
+    duration = prompt_duration()
+    text = text_manager.get_text(level, duration)
+
+    display.clear()
+    display.banner()
+    display.show_text(level, duration, text)
+    input("Press Enter when you're ready to start...")
+
+    engine = TypingEngine(text)
+    engine.start_test()
+    try:
+        user_input = input()
+    except KeyboardInterrupt:
+        user_input = ""
+    engine.update_from_input_snapshot(user_input)
+    result = engine.finalize_test()
+
+    # Save session
+    session_id = generate_session_id()
+    storage.save_session({
+        "id": session_id,
+        "timestamp": now_utc_iso(),
+        "mode": level,
+        "duration": result.duration_seconds,
+        "text_length": result.text_length,
+        "wpm": result.wpm,
+        "accuracy": result.accuracy,
+        "errors": result.errors,
+        "keystrokes": [],
+    })
+
+    display.clear()
+    display.banner()
+    display.show_results(result)
+
+
+def view_history_flow(display: DisplayManager, storage: StorageManager) -> None:
+    display.clear()
+    display.banner()
+    rows = storage.fetch_recent_sessions(limit=15)
+    print("\nRecent Sessions:\n")
+    print(format_history_table(rows))
+    print("\nPress Enter to return to menu...")
+    input()
+
+
 def main() -> None:
     display = DisplayManager()
     text_manager = TextManager()
     storage = StorageManager()
+    menu = MenuSystem()
 
     display.clear()
     display.banner()
@@ -62,44 +113,12 @@ def main() -> None:
     print(f"\nHello, {name}! Test your typing speed in terminal\n")
 
     while True:
-        level = prompt_level()
-        duration = prompt_duration()
-        text = text_manager.get_text(level, duration)
-
-        display.clear()
-        display.banner()
-        display.show_text(level, duration, text)
-        input("Press Enter when you're ready to start...")
-
-        engine = TypingEngine(text)
-        engine.start_test()
-        try:
-            user_input = input()
-        except KeyboardInterrupt:
-            user_input = ""
-        engine.update_from_input_snapshot(user_input)
-        result = engine.finalize_test()
-
-        # Save session
-        session_id = generate_session_id()
-        storage.save_session({
-            "id": session_id,
-            "timestamp": now_utc_iso(),
-            "mode": level,
-            "duration": result.duration_seconds,
-            "text_length": result.text_length,
-            "wpm": result.wpm,
-            "accuracy": result.accuracy,
-            "errors": result.errors,
-            "keystrokes": [],
-        })
-
-        display.clear()
-        display.banner()
-        display.show_results(result)
-
-        print("\nWould you like to try again? (y/n)", end=" ")
-        if input().lower().strip() not in ['y', 'yes']:
+        choice = menu.prompt()
+        if choice == "start":
+            run_test_flow(display, text_manager, storage)
+        elif choice == "history":
+            view_history_flow(display, storage)
+        else:
             break
 
     print("\n\nThank you for using Terminal Typewriter. Goodbye!")
