@@ -1,0 +1,2 @@
+# Minimal requirements for initial CLI foundation
+# Windows users may need windows-curses in the future
