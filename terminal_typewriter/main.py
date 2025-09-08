@@ -1,10 +1,13 @@
 import sys
+import time
 from typing import Optional
 
 from src.core.text_manager import TextManager
 from src.core.engine import TypingEngine
+from src.core.timer import CountdownTimer
 from src.ui.display import DisplayManager
 from src.ui.menu import MenuSystem
+from src.ui.input_handler import InputHandler
 from src.data.storage import StorageManager
 from src.utils.helpers import generate_session_id, now_utc_iso
 from src.features.reports import format_history_table
@@ -64,11 +67,33 @@ def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: S
 
     engine = TypingEngine(text)
     engine.start_test()
-    try:
-        user_input = input()
-    except KeyboardInterrupt:
-        user_input = ""
-    engine.update_from_input_snapshot(user_input)
+
+    remaining = duration
+    timer = CountdownTimer(
+        duration_seconds=duration,
+        on_tick=lambda r: None,
+        on_complete=lambda: None,
+    )
+    timer.start()
+
+    last_render = 0.0
+    render_interval = 0.1
+
+    display.clear()
+    display.banner()
+    print(text)
+
+    with InputHandler() as ih:
+        while timer.remaining > 0:
+            key = ih.read_key()
+            if key is not None:
+                engine.process_keystroke(key)
+            now = time.time()
+            if now - last_render >= render_interval:
+                last_render = now
+                display.render_live(engine, timer.remaining)
+        # timer complete
+
     result = engine.finalize_test()
 
     # Save session

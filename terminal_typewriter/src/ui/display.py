@@ -1,5 +1,6 @@
 import os
 import sys
+from ..core.engine import TypingEngine
 
 
 class DisplayManager:
@@ -34,3 +35,14 @@ class DisplayManager:
         print(f"❌ Errors: {result.errors}")
         print(f"📝 Total chars: {result.text_length}")
         print("\n" + "=" * 50)
+
+    def render_live(self, engine: TypingEngine, remaining_seconds: int) -> None:
+        stats = engine.get_current_stats()
+        print("\n" + "-" * 70)
+        print(f"⏳ Time remaining: {remaining_seconds:>3} s  |  WPM: {stats.wpm:>5}  |  Acc: {stats.accuracy:>5}%  |  Chars: {stats.characters_typed}")
+        print("-" * 70)
+        buf = engine.get_buffer()
+        caret = "|"
+        # Show only last 120 characters of buffer for brevity
+        snippet = buf[-120:]
+        print(f"Your input: {snippet}{caret}")
