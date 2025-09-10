@@ -11,6 +11,7 @@ from src.ui.input_handler import InputHandler
 from src.data.storage import StorageManager
 from src.utils.helpers import generate_session_id, now_utc_iso
 from src.features.reports import format_history_table
+from src.features.replay import ReplaySystem
 
 
 def prompt_level() -> str:
@@ -68,7 +69,6 @@ def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: S
     engine = TypingEngine(text)
     engine.start_test()
 
-    remaining = duration
     timer = CountdownTimer(
         duration_seconds=duration,
         on_tick=lambda r: None,
@@ -92,11 +92,9 @@ def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: S
             if now - last_render >= render_interval:
                 last_render = now
                 display.render_live(engine, timer.remaining)
-        # timer complete
 
     result = engine.finalize_test()
 
-    # Save session
     session_id = generate_session_id()
     storage.save_session({
         "id": session_id,
@@ -107,7 +105,7 @@ def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: S
         "wpm": result.wpm,
         "accuracy": result.accuracy,
         "errors": result.errors,
-        "keystrokes": [],
+        "keystrokes": engine.get_keystrokes(),
     })
 
     display.clear()
@@ -123,6 +121,40 @@ def view_history_flow(display: DisplayManager, storage: StorageManager) -> None:
     print(format_history_table(rows))
     print("\nPress Enter to return to menu...")
     input()
+
+
+def replay_last_flow(display: DisplayManager, storage: StorageManager, text_manager: TextManager) -> None:
+    session = storage.fetch_latest_session_with_keystrokes()
+    if not session:
+        display.clear()
+        display.banner()
+        print("\nNo sessions available to replay.")
+        print("\nPress Enter to return to menu...")
+        input()
+        return
+    level = session.get("mode", "beginner")
+    # Recreate approximate text length by level using default duration 60 if needed
+    # Note: For now we regenerate text for the level; later we can store exact text per session.
+    text = text_manager.get_text(level, 60)
+
+    display.clear()
+    display.banner()
+    print("Replaying last session... Press Ctrl+C to stop.\n")
+    print(text)
+
+    def on_frame(engine: TypingEngine):
+        # Show compact live stats without clearing screen aggressively
+        stats = engine.get_current_stats()
+        print(f"\rWPM: {stats.wpm:>5}  Acc: {stats.accuracy:>5}%  Chars: {stats.characters_typed}", end="", flush=True)
+
+    try:
+        replayer = ReplaySystem(text=text, keystrokes=session.get("keystrokes", []))
+        replayer.run(speed=1.0, on_frame=on_frame)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print("\n\nReplay finished. Press Enter to return to menu...")
+        input()
 
 
 def main() -> None:
@@ -143,6 +175,8 @@ def main() -> None:
             run_test_flow(display, text_manager, storage)
         elif choice == "history":
             view_history_flow(display, storage)
+        elif choice == "replay_last":
+            replay_last_flow(display, storage, text_manager)
         else:
             break
 

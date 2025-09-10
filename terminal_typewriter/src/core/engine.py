@@ -1,4 +1,5 @@
-from typing import Optional
+import time
+from typing import Optional, List, Dict, Any
 
 from .stats import StatsTracker
 from ..data.models import RealtimeStats, TestResult
@@ -15,6 +16,7 @@ class TypingEngine:
         self._completed = False
         self._result: Optional[TestResult] = None
         self._buffer: str = ""
+        self._keystrokes: List[Dict[str, Any]] = []
 
     def start_test(self) -> None:
         if self._started:
@@ -22,16 +24,23 @@ class TypingEngine:
         self._started = True
         self.stats_tracker.start()
 
+    def _timestamp_since_start(self) -> float:
+        st = self.stats_tracker.stats.start_time
+        now = time.time()
+        if st is None:
+            return 0.0
+        return max(0.0, now - st)
+
     def process_keystroke(self, key: str) -> None:
         if self._completed:
             return
         if key == BACKSPACE:
             self._buffer = self._buffer[:-1]
         elif key == ENTER:
-            # Allow newline as a space for our flat text
             self._buffer += " "
         else:
             self._buffer += key
+        self._keystrokes.append({"t": round(self._timestamp_since_start(), 3), "k": key})
         self.stats_tracker.update_from_input(self._buffer)
 
     def update_from_input_snapshot(self, user_input: str) -> None:
@@ -43,6 +52,9 @@ class TypingEngine:
 
     def get_buffer(self) -> str:
         return self._buffer
+
+    def get_keystrokes(self) -> List[Dict[str, Any]]:
+        return list(self._keystrokes)
 
     def is_complete(self) -> bool:
         return self._completed

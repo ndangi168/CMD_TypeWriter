@@ -104,3 +104,56 @@ class StorageManager:
             cur.execute("SELECT COUNT(1) FROM sessions")
             (count,) = cur.fetchone()
             return int(count)
+
+    def fetch_latest_session_with_keystrokes(self) -> Optional[Dict[str, Any]]:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data
+                FROM sessions
+                ORDER BY timestamp DESC
+                LIMIT 1
+                """
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return {
+                "id": row[0],
+                "timestamp": row[1],
+                "mode": row[2],
+                "duration": row[3],
+                "text_length": row[4],
+                "wpm": row[5],
+                "accuracy": row[6],
+                "errors": row[7],
+                "keystrokes": json.loads(row[8] or "[]"),
+            }
+
+    def fetch_session_by_id(self, session_id: str) -> Optional[Dict[str, Any]]:
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data
+                FROM sessions
+                WHERE id = ?
+                LIMIT 1
+                """,
+                (session_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return {
+                "id": row[0],
+                "timestamp": row[1],
+                "mode": row[2],
+                "duration": row[3],
+                "text_length": row[4],
+                "wpm": row[5],
+                "accuracy": row[6],
+                "errors": row[7],
+                "keystrokes": json.loads(row[8] or "[]"),
+            }
