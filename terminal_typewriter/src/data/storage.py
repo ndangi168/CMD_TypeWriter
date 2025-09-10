@@ -47,6 +47,11 @@ class StorageManager:
                 )
                 """
             )
+            # Migration: ensure 'text' column exists to store exact session text
+            cur.execute("PRAGMA table_info(sessions)")
+            cols = [r[1] for r in cur.fetchall()]
+            if "text" not in cols:
+                cur.execute("ALTER TABLE sessions ADD COLUMN text TEXT")
             conn.commit()
 
     def save_session(self, session: Dict[str, Any]) -> None:
@@ -54,8 +59,8 @@ class StorageManager:
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO sessions (id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO sessions (id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data, text)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     session["id"],
@@ -67,6 +72,7 @@ class StorageManager:
                     session.get("accuracy"),
                     session.get("errors"),
                     json.dumps(session.get("keystrokes", [])),
+                    session.get("text"),
                 ),
             )
             conn.commit()
@@ -110,7 +116,7 @@ class StorageManager:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data
+                SELECT id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data, text
                 FROM sessions
                 ORDER BY timestamp DESC
                 LIMIT 1
@@ -129,6 +135,7 @@ class StorageManager:
                 "accuracy": row[6],
                 "errors": row[7],
                 "keystrokes": json.loads(row[8] or "[]"),
+                "text": row[9],
             }
 
     def fetch_session_by_id(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -136,7 +143,7 @@ class StorageManager:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data
+                SELECT id, timestamp, mode, duration, text_length, wpm, accuracy, errors, keystrokes_data, text
                 FROM sessions
                 WHERE id = ?
                 LIMIT 1
@@ -156,4 +163,5 @@ class StorageManager:
                 "accuracy": row[6],
                 "errors": row[7],
                 "keystrokes": json.loads(row[8] or "[]"),
+                "text": row[9],
             }

@@ -106,6 +106,7 @@ def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: S
         "accuracy": result.accuracy,
         "errors": result.errors,
         "keystrokes": engine.get_keystrokes(),
+        "text": text,
     })
 
     display.clear()
@@ -132,10 +133,7 @@ def replay_last_flow(display: DisplayManager, storage: StorageManager, text_mana
         print("\nPress Enter to return to menu...")
         input()
         return
-    level = session.get("mode", "beginner")
-    # Recreate approximate text length by level using default duration 60 if needed
-    # Note: For now we regenerate text for the level; later we can store exact text per session.
-    text = text_manager.get_text(level, 60)
+    text = session.get("text") or ""
 
     display.clear()
     display.banner()
@@ -143,7 +141,6 @@ def replay_last_flow(display: DisplayManager, storage: StorageManager, text_mana
     print(text)
 
     def on_frame(engine: TypingEngine):
-        # Show compact live stats without clearing screen aggressively
         stats = engine.get_current_stats()
         print(f"\rWPM: {stats.wpm:>5}  Acc: {stats.accuracy:>5}%  Chars: {stats.characters_typed}", end="", flush=True)
 
