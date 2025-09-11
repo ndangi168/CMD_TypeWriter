@@ -8,6 +8,7 @@ from src.core.timer import CountdownTimer
 from src.ui.display import DisplayManager
 from src.ui.menu import MenuSystem
 from src.ui.input_handler import InputHandler
+from src.ui.curses_display import CursesDisplay
 from src.data.storage import StorageManager
 from src.utils.helpers import generate_session_id, now_utc_iso
 from src.features.reports import format_history_table
@@ -114,6 +115,39 @@ def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: S
     display.show_results(result)
 
 
+def run_test_flow_curses(text_manager: TextManager, storage: StorageManager) -> None:
+    level = prompt_level()
+    duration = prompt_duration()
+    text = text_manager.get_text(level, duration)
+
+    def _session(stdscr):
+        engine = TypingEngine(text)
+        ui = CursesDisplay(stdscr)
+        ui.run_session(text=text, duration=duration, engine=engine)
+        result = engine.finalize_test()
+        session_id = generate_session_id()
+        storage.save_session({
+            "id": session_id,
+            "timestamp": now_utc_iso(),
+            "mode": level,
+            "duration": result.duration_seconds,
+            "text_length": result.text_length,
+            "wpm": result.wpm,
+            "accuracy": result.accuracy,
+            "errors": result.errors,
+            "keystrokes": engine.get_keystrokes(),
+            "text": text,
+        })
+
+    try:
+        import curses
+        curses.wrapper(_session)
+    except Exception as exc:
+        print("Curses mode failed, falling back to standard mode. Reason:", exc)
+        display = DisplayManager()
+        run_test_flow(display, text_manager, storage)
+
+
 def view_history_flow(display: DisplayManager, storage: StorageManager) -> None:
     display.clear()
     display.banner()
@@ -174,6 +208,8 @@ def main() -> None:
             view_history_flow(display, storage)
         elif choice == "replay_last":
             replay_last_flow(display, storage, text_manager)
+        elif choice == "start_curses":
+            run_test_flow_curses(text_manager, storage)
         else:
             break
 
