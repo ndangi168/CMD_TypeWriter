@@ -1,1 +1,32 @@
-{}
+{
+  "default": {
+    "name": "Default",
+    "colors": {
+      "header": "white",
+      "text": "white",
+      "correct": "green",
+      "incorrect": "red",
+      "caret": "yellow"
+    }
+  },
+  "dark": {
+    "name": "Dark",
+    "colors": {
+      "header": "cyan",
+      "text": "white",
+      "correct": "green",
+      "incorrect": "red",
+      "caret": "yellow"
+    }
+  },
+  "bright": {
+    "name": "Bright",
+    "colors": {
+      "header": "blue",
+      "text": "black",
+      "correct": "green",
+      "incorrect": "red",
+      "caret": "magenta"
+    }
+  }
+}

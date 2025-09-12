@@ -1,1 +1,9 @@
-{}
+{
+  "default_difficulty": "beginner",
+  "default_duration": 60,
+  "default_theme": "default",
+  "auto_save_sessions": true,
+  "show_live_stats": true,
+  "wpm_target": 60,
+  "user_name": "Guest"
+}
