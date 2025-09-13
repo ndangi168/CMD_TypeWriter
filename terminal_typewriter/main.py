@@ -14,6 +14,7 @@ from src.utils.helpers import generate_session_id, now_utc_iso
 from src.utils.config import ConfigManager
 from src.features.reports import format_history_table
 from src.features.replay import ReplaySystem
+from src.features.analytics import Analytics
 
 
 def prompt_level(config: ConfigManager) -> str:
@@ -166,6 +167,18 @@ def view_history_flow(display: DisplayManager, storage: StorageManager) -> None:
     input()
 
 
+def analytics_flow(display: DisplayManager, storage: StorageManager) -> None:
+    display.clear()
+    display.banner()
+    
+    sessions = storage.fetch_recent_sessions(limit=100)  # Get more sessions for analytics
+    analytics = Analytics(sessions)
+    
+    print("\n" + analytics.format_summary_report())
+    print("\nPress Enter to return to menu...")
+    input()
+
+
 def replay_last_flow(display: DisplayManager, storage: StorageManager, text_manager: TextManager) -> None:
     session = storage.fetch_latest_session_with_keystrokes()
     if not session:
@@ -301,6 +314,8 @@ def main() -> None:
             replay_last_flow(display, storage, text_manager)
         elif choice == "start_curses":
             run_test_flow_curses(text_manager, storage, config)
+        elif choice == "analytics":
+            analytics_flow(display, storage)
         elif choice == "settings":
             settings_flow(display, config)
         else:
