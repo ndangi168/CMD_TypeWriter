@@ -1,1 +1,72 @@
-{}
+{
+  "first_session": {
+    "name": "First Steps",
+    "description": "Complete your first typing session",
+    "icon": "🎯"
+  },
+  "speed_30": {
+    "name": "Getting Faster",
+    "description": "Achieve 30 WPM in a session",
+    "icon": "⚡"
+  },
+  "speed_50": {
+    "name": "Speed Demon",
+    "description": "Achieve 50 WPM in a session",
+    "icon": "🚀"
+  },
+  "speed_75": {
+    "name": "Lightning Fast",
+    "description": "Achieve 75 WPM in a session",
+    "icon": "⚡⚡"
+  },
+  "speed_100": {
+    "name": "Typing Master",
+    "description": "Achieve 100 WPM in a session",
+    "icon": "🏆"
+  },
+  "accuracy_95": {
+    "name": "Precision",
+    "description": "Achieve 95% accuracy in a session",
+    "icon": "🎯"
+  },
+  "accuracy_99": {
+    "name": "Perfect Aim",
+    "description": "Achieve 99% accuracy in a session",
+    "icon": "💯"
+  },
+  "sessions_10": {
+    "name": "Dedicated",
+    "description": "Complete 10 typing sessions",
+    "icon": "📚"
+  },
+  "sessions_50": {
+    "name": "Committed",
+    "description": "Complete 50 typing sessions",
+    "icon": "🔥"
+  },
+  "sessions_100": {
+    "name": "Expert",
+    "description": "Complete 100 typing sessions",
+    "icon": "👑"
+  },
+  "time_1hour": {
+    "name": "Marathon",
+    "description": "Spend 1 hour total typing",
+    "icon": "⏰"
+  },
+  "time_5hours": {
+    "name": "Endurance",
+    "description": "Spend 5 hours total typing",
+    "icon": "🏃"
+  },
+  "all_difficulties": {
+    "name": "Versatile",
+    "description": "Complete sessions in all difficulty levels",
+    "icon": "🌟"
+  },
+  "streak_5": {
+    "name": "Consistent",
+    "description": "Complete 5 sessions in a row (daily)",
+    "icon": "📅"
+  }
+}

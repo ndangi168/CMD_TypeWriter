@@ -15,6 +15,7 @@ from src.utils.config import ConfigManager
 from src.features.reports import format_history_table
 from src.features.replay import ReplaySystem
 from src.features.analytics import Analytics
+from src.features.achievements import AchievementSystem
 
 
 def prompt_level(config: ConfigManager) -> str:
@@ -66,7 +67,7 @@ def prompt_duration(config: ConfigManager) -> int:
         print("Invalid choice. Please select a number between 1 and 5.")
 
 
-def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: StorageManager, config: ConfigManager) -> None:
+def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: StorageManager, config: ConfigManager, achievements: AchievementSystem) -> None:
     level = prompt_level(config)
     duration = prompt_duration(config)
     text = text_manager.get_text(level, duration)
@@ -119,12 +120,25 @@ def run_test_flow(display: DisplayManager, text_manager: TextManager, storage: S
         "text": text,
     })
 
+    # Check for new achievements
+    sessions = storage.fetch_recent_sessions(limit=100)
+    new_achievements = achievements.check_achievements(sessions)
+
     display.clear()
     display.banner()
     display.show_results(result)
+    
+    # Show new achievements
+    if new_achievements:
+        print("\n🎉 NEW ACHIEVEMENTS UNLOCKED! 🎉")
+        for achievement in new_achievements:
+            print(f"  {achievement['icon']} {achievement['name']}")
+            print(f"    {achievement['description']}")
+        print("\nPress Enter to continue...")
+        input()
 
 
-def run_test_flow_curses(text_manager: TextManager, storage: StorageManager, config: ConfigManager) -> None:
+def run_test_flow_curses(text_manager: TextManager, storage: StorageManager, config: ConfigManager, achievements: AchievementSystem) -> None:
     level = prompt_level(config)
     duration = prompt_duration(config)
     text = text_manager.get_text(level, duration)
@@ -154,7 +168,7 @@ def run_test_flow_curses(text_manager: TextManager, storage: StorageManager, con
     except Exception as exc:
         print("Curses mode failed, falling back to standard mode. Reason:", exc)
         display = DisplayManager()
-        run_test_flow(display, text_manager, storage, config)
+        run_test_flow(display, text_manager, storage, config, achievements)
 
 
 def view_history_flow(display: DisplayManager, storage: StorageManager) -> None:
@@ -175,6 +189,28 @@ def analytics_flow(display: DisplayManager, storage: StorageManager) -> None:
     analytics = Analytics(sessions)
     
     print("\n" + analytics.format_summary_report())
+    print("\nPress Enter to return to menu...")
+    input()
+
+
+def achievements_flow(display: DisplayManager, storage: StorageManager) -> None:
+    display.clear()
+    display.banner()
+    
+    sessions = storage.fetch_recent_sessions(limit=100)
+    achievements = AchievementSystem(storage)
+    
+    # Check for new achievements
+    new_achievements = achievements.check_achievements(sessions)
+    
+    print("\n" + achievements.format_achievements_report())
+    
+    if new_achievements:
+        print("\n🎉 NEW ACHIEVEMENTS UNLOCKED! 🎉")
+        for achievement in new_achievements:
+            print(f"  {achievement['icon']} {achievement['name']}")
+            print(f"    {achievement['description']}")
+    
     print("\nPress Enter to return to menu...")
     input()
 
@@ -290,6 +326,7 @@ def main() -> None:
     text_manager = TextManager()
     storage = StorageManager()
     config = ConfigManager()
+    achievements = AchievementSystem(storage)
     menu = MenuSystem()
 
     display.clear()
@@ -307,15 +344,17 @@ def main() -> None:
     while True:
         choice = menu.prompt()
         if choice == "start":
-            run_test_flow(display, text_manager, storage, config)
+            run_test_flow(display, text_manager, storage, config, achievements)
         elif choice == "history":
             view_history_flow(display, storage)
         elif choice == "replay_last":
             replay_last_flow(display, storage, text_manager)
         elif choice == "start_curses":
-            run_test_flow_curses(text_manager, storage, config)
+            run_test_flow_curses(text_manager, storage, config, achievements)
         elif choice == "analytics":
             analytics_flow(display, storage)
+        elif choice == "achievements":
+            achievements_flow(display, storage)
         elif choice == "settings":
             settings_flow(display, config)
         else:
