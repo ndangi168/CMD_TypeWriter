@@ -1,5 +1,7 @@
 import random
-from typing import List
+import os
+from typing import List, Optional
+from pathlib import Path
 
 
 BEGINNER_TEXTS: List[str] = [
@@ -36,15 +38,25 @@ EXPERT_TEXTS: List[str] = [
 
 
 class TextManager:
-    def __init__(self) -> None:
+    def __init__(self, texts_dir: str = None) -> None:
         self.level_to_texts = {
             "beginner": BEGINNER_TEXTS,
             "intermediate": INTERMEDIATE_TEXTS,
             "advanced": ADVANCED_TEXTS,
             "expert": EXPERT_TEXTS,
         }
+        
+        # Set up custom texts directory
+        if texts_dir is None:
+            texts_dir = os.path.join(os.getcwd(), "terminal_typewriter", "data", "texts")
+        self.texts_dir = Path(texts_dir)
+        self.texts_dir.mkdir(parents=True, exist_ok=True)
 
-    def get_text(self, level: str, duration_seconds: int) -> str:
+    def get_text(self, level: str, duration_seconds: int, custom_text: Optional[str] = None) -> str:
+        """Get text for typing test. If custom_text is provided, use it instead of generated text."""
+        if custom_text:
+            return custom_text
+            
         target_word_count = int(duration_seconds * 2.5)
         source_list = self.level_to_texts.get(level, BEGINNER_TEXTS)
         selected = random.choice(source_list)
@@ -52,3 +64,45 @@ class TextManager:
         while len(words) < target_word_count:
             words.extend(random.choice(source_list).split())
         return " ".join(words[:target_word_count])
+
+    def get_custom_text(self, name: str, difficulty: str = "custom") -> Optional[str]:
+        """Get imported custom text by name and difficulty."""
+        text_file = self.texts_dir / f"{name}_{difficulty}.txt"
+        
+        if text_file.exists():
+            try:
+                with open(text_file, 'r', encoding='utf-8') as f:
+                    return f.read().strip()
+            except Exception:
+                pass
+        
+        return None
+
+    def list_custom_texts(self) -> List[dict]:
+        """List all available custom texts."""
+        custom_texts = []
+        
+        for text_file in self.texts_dir.glob("*.txt"):
+            try:
+                with open(text_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Parse filename
+                name_difficulty = text_file.stem
+                if '_' in name_difficulty:
+                    name, difficulty = name_difficulty.rsplit('_', 1)
+                else:
+                    name = name_difficulty
+                    difficulty = "custom"
+                
+                custom_texts.append({
+                    "name": name,
+                    "difficulty": difficulty,
+                    "word_count": len(content.split()),
+                    "file_path": str(text_file)
+                })
+                
+            except Exception:
+                continue
+        
+        return custom_texts
