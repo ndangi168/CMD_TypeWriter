@@ -16,6 +16,7 @@ from src.features.reports import format_history_table
 from src.features.replay import ReplaySystem
 from src.features.analytics import Analytics
 from src.features.achievements import AchievementSystem
+from src.features.text_importer import TextImporter
 
 
 def prompt_level(config: ConfigManager) -> str:
@@ -185,10 +186,32 @@ def analytics_flow(display: DisplayManager, storage: StorageManager) -> None:
     display.clear()
     display.banner()
     
-    sessions = storage.fetch_recent_sessions(limit=100)  # Get more sessions for analytics
-    analytics = Analytics(sessions)
+    print("\nAnalytics Options:")
+    print("1. Standard Report")
+    print("2. Enhanced Report with Charts")
+    print("3. Back to main menu")
     
-    print("\n" + analytics.format_summary_report())
+    while True:
+        choice = input("\nEnter your choice (1-3): ").strip()
+        
+        if choice == "1":
+            sessions = storage.fetch_recent_sessions(limit=100)
+            analytics = Analytics(sessions)
+            print("\n" + analytics.format_summary_report())
+            break
+            
+        elif choice == "2":
+            sessions = storage.fetch_recent_sessions(limit=100)
+            analytics = Analytics(sessions)
+            print("\n" + analytics.format_summary_report_with_charts())
+            break
+            
+        elif choice == "3":
+            return
+            
+        else:
+            print("Invalid choice")
+    
     print("\nPress Enter to return to menu...")
     input()
 
@@ -210,6 +233,129 @@ def achievements_flow(display: DisplayManager, storage: StorageManager) -> None:
         for achievement in new_achievements:
             print(f"  {achievement['icon']} {achievement['name']}")
             print(f"    {achievement['description']}")
+    
+    print("\nPress Enter to return to menu...")
+    input()
+
+
+def text_import_flow(display: DisplayManager, text_manager: TextManager) -> None:
+    display.clear()
+    display.banner()
+    
+    importer = TextImporter()
+    
+    print("\n📝 Custom Text Import")
+    print("=" * 30)
+    print("1. Import from file")
+    print("2. Import from text input")
+    print("3. View imported texts")
+    print("4. Delete imported text")
+    print("5. Back to main menu")
+    
+    while True:
+        choice = input("\nEnter your choice (1-5): ").strip()
+        
+        if choice == "1":
+            # Import from file
+            file_path = input("\nEnter file path: ").strip()
+            name = input("Enter name for this text (optional): ").strip()
+            if not name:
+                name = None
+            
+            print("\nSelect difficulty level:")
+            print("1. beginner")
+            print("2. intermediate") 
+            print("3. advanced")
+            print("4. expert")
+            print("5. custom")
+            
+            diff_choice = input("Enter choice (1-5): ").strip()
+            difficulties = {'1': 'beginner', '2': 'intermediate', '3': 'advanced', '4': 'expert', '5': 'custom'}
+            difficulty = difficulties.get(diff_choice, 'custom')
+            
+            result = importer.import_text_file(file_path, difficulty, name)
+            
+            if result["success"]:
+                print(f"\n✅ Successfully imported '{result['name']}'")
+                print(f"   Difficulty: {result['difficulty']}")
+                print(f"   Word count: {result['word_count']}")
+            else:
+                print(f"\n❌ Import failed: {result['error']}")
+                
+        elif choice == "2":
+            # Import from text input
+            print("\nEnter your text (press Enter twice when done):")
+            lines = []
+            while True:
+                line = input()
+                if line == "" and lines and lines[-1] == "":
+                    break
+                lines.append(line)
+            
+            content = "\n".join(lines[:-1])  # Remove last empty line
+            
+            if not content.strip():
+                print("❌ No content provided")
+                continue
+                
+            name = input("Enter name for this text: ").strip()
+            if not name:
+                print("❌ Name is required")
+                continue
+            
+            print("\nSelect difficulty level:")
+            print("1. beginner")
+            print("2. intermediate")
+            print("3. advanced") 
+            print("4. expert")
+            print("5. custom")
+            
+            diff_choice = input("Enter choice (1-5): ").strip()
+            difficulties = {'1': 'beginner', '2': 'intermediate', '3': 'advanced', '4': 'expert', '5': 'custom'}
+            difficulty = difficulties.get(diff_choice, 'custom')
+            
+            result = importer.import_text_content(content, name, difficulty)
+            
+            if result["success"]:
+                print(f"\n✅ Successfully imported '{result['name']}'")
+                print(f"   Difficulty: {result['difficulty']}")
+                print(f"   Word count: {result['word_count']}")
+            else:
+                print(f"\n❌ Import failed: {result['error']}")
+                
+        elif choice == "3":
+            # View imported texts
+            print("\n" + importer.format_texts_list())
+            
+        elif choice == "4":
+            # Delete imported text
+            texts = importer.list_imported_texts()
+            if not texts:
+                print("\nNo imported texts to delete")
+                continue
+                
+            print("\nSelect text to delete:")
+            for i, text in enumerate(texts, 1):
+                print(f"{i}. {text['name']} ({text['difficulty']}, {text['word_count']} words)")
+            
+            try:
+                choice_idx = int(input("Enter number: ")) - 1
+                if 0 <= choice_idx < len(texts):
+                    text = texts[choice_idx]
+                    if importer.delete_imported_text(text['name'], text['difficulty']):
+                        print(f"✅ Deleted '{text['name']}'")
+                    else:
+                        print(f"❌ Failed to delete '{text['name']}'")
+                else:
+                    print("❌ Invalid selection")
+            except ValueError:
+                print("❌ Invalid input")
+                
+        elif choice == "5":
+            break
+            
+        else:
+            print("Invalid choice")
     
     print("\nPress Enter to return to menu...")
     input()
@@ -355,6 +501,8 @@ def main() -> None:
             analytics_flow(display, storage)
         elif choice == "achievements":
             achievements_flow(display, storage)
+        elif choice == "text_import":
+            text_import_flow(display, text_manager)
         elif choice == "settings":
             settings_flow(display, config)
         else:
