@@ -1,10 +1,13 @@
 from typing import List, Dict, Any, Tuple
 from statistics import mean, median
 
+from ..utils.charts import ASCIIChart
+
 
 class Analytics:
     def __init__(self, sessions: List[Dict[str, Any]]) -> None:
         self.sessions = sessions
+        self.charts = ASCIIChart()
 
     def get_summary_stats(self) -> Dict[str, Any]:
         """Get overall summary statistics."""
@@ -132,5 +135,53 @@ class Analytics:
                 report.append(f"    Avg WPM: {stats['avg_wpm']}")
                 report.append(f"    Best WPM: {stats['best_wpm']}")
                 report.append(f"    Avg Accuracy: {stats['avg_accuracy']:.1f}%")
+        
+        return "\n".join(report)
+
+    def format_summary_report_with_charts(self) -> str:
+        """Format a human-readable summary report with ASCII charts."""
+        summary = self.get_summary_stats()
+        trends = self.get_progress_trends()
+        difficulty_stats = self.get_difficulty_stats()
+        
+        report = []
+        report.append("📊 TYPING ANALYTICS REPORT")
+        report.append("=" * 50)
+        report.append("")
+        
+        # Overall stats
+        report.append("🎯 Overall Performance:")
+        report.append(f"  Total Sessions: {summary['total_sessions']}")
+        report.append(f"  Total Time: {summary['total_time']:.1f} seconds")
+        report.append(f"  Best WPM: {summary['best_wpm']}")
+        report.append(f"  Average WPM: {summary['avg_wpm']}")
+        report.append(f"  Best Accuracy: {summary['best_accuracy']:.1f}%")
+        report.append(f"  Average Accuracy: {summary['avg_accuracy']:.1f}%")
+        report.append(f"  Total Errors: {summary['total_errors']}")
+        report.append("")
+        
+        # WPM Trend Chart
+        if len(self.sessions) > 1:
+            report.append(self.charts.generate_wpm_trend_chart(self.sessions))
+            report.append("")
+        
+        # Accuracy Trend Chart
+        if len(self.sessions) > 1:
+            report.append(self.charts.generate_accuracy_trend_chart(self.sessions))
+            report.append("")
+        
+        # Difficulty Performance Chart
+        if difficulty_stats:
+            report.append(self.charts.generate_difficulty_performance_chart(self.sessions))
+            report.append("")
+        
+        # Trends
+        if trends.get('trend') != 'insufficient_data':
+            report.append("📈 Recent Trends:")
+            report.append(f"  WPM Trend: {trends['wpm_trend']} ({trends['wpm_change']:+.1f})")
+            report.append(f"  Accuracy Trend: {trends['accuracy_trend']} ({trends['accuracy_change']:+.1f}%)")
+            report.append(f"  Sessions Analyzed: {trends['sessions_analyzed']}")
+        else:
+            report.append("📈 Recent Trends: Insufficient data (need 2+ sessions)")
         
         return "\n".join(report)
