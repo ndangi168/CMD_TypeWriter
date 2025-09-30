@@ -1,6 +1,6 @@
 from typing import Literal
 
-MenuChoice = Literal["start", "history", "replay_last", "start_curses", "analytics", "achievements", "settings", "exit"]
+MenuChoice = Literal["start", "history", "replay_last", "start_curses", "analytics", "achievements", "text_import", "settings", "exit"]
 
 
 class MenuSystem:
@@ -12,10 +12,11 @@ class MenuSystem:
         print("4. Start Typing Test (curses)")
         print("5. Analytics & Progress")
         print("6. Achievements")
-        print("7. Settings")
-        print("8. Exit")
+        print("7. Import Custom Text")
+        print("8. Settings")
+        print("9. Exit")
         while True:
-            choice = input("Enter your choice (1-8): ").strip()
+            choice = input("Enter your choice (1-9): ").strip()
             if choice == '1':
                 return "start"
             if choice == '2':
@@ -29,7 +30,9 @@ class MenuSystem:
             if choice == '6':
                 return "achievements"
             if choice == '7':
-                return "settings"
+                return "text_import"
             if choice == '8':
+                return "settings"
+            if choice == '9':
                 return "exit"
-            print("Invalid choice. Please select 1, 2, 3, 4, 5, 6, 7, or 8.")
+            print("Invalid choice. Please select 1, 2, 3, 4, 5, 6, 7, 8, or 9.")
